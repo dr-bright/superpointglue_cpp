@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
-project(superpointglue)
+cmake_minimum_required(VERSION 3.3)
+project(superpointglue_cpp)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE "release")
@@ -26,7 +26,13 @@ include_directories(
 add_library(${PROJECT_NAME}_lib SHARED
   src/super_point.cpp
   src/super_glue.cpp
-)
+  include/read_config.h
+  include/super_glue.h
+  include/super_point.h
+  include/utils.h
+  )
+
+target_include_directories(${PROJECT_NAME}_lib PUBLIC include)
 
 target_link_libraries(${PROJECT_NAME}_lib
   nvinfer
@@ -36,9 +42,3 @@ target_link_libraries(${PROJECT_NAME}_lib
   yaml-cpp
   tensorrtbuffer
 )
-
-add_executable(${PROJECT_NAME}_image inference_image.cpp)
-add_executable(${PROJECT_NAME}_sequence inference_sequence.cpp)
-
-target_link_libraries(${PROJECT_NAME}_image ${PROJECT_NAME}_lib)
-target_link_libraries(${PROJECT_NAME}_sequence  ${PROJECT_NAME}_lib)
