@@ -2,7 +2,7 @@
 // Created by haoyuefan on 2021/9/22.
 //
 
-#include "super_glue.h"
+#include "superpointglue_cpp/super_glue.h"
 #include <cfloat>
 #include <utility>
 #include <unordered_map>

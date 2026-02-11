@@ -14,25 +14,24 @@ find_package(CUDA REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}
+add_library(${PROJECT_NAME}_lib SHARED
+  src/super_point.cpp
+  src/super_glue.cpp
+  include/superpointglue_cpp/read_config.h
+  include/superpointglue_cpp/super_glue.h
+  include/superpointglue_cpp/super_point.h
+  include/superpointglue_cpp/utils.h
+  )
+
+target_include_directories(
+  ${PROJECT_NAME}_lib
+  PUBLIC
   ${PROJECT_SOURCE_DIR}/include
   ${OpenCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIR}
-)
-
-add_library(${PROJECT_NAME}_lib SHARED
-  src/super_point.cpp
-  src/super_glue.cpp
-  include/read_config.h
-  include/super_glue.h
-  include/super_point.h
-  include/utils.h
   )
-
-target_include_directories(${PROJECT_NAME}_lib PUBLIC include)
 
 target_link_libraries(${PROJECT_NAME}_lib
   nvinfer
@@ -40,5 +39,9 @@ target_link_libraries(${PROJECT_NAME}_lib
   ${OpenCV_LIBRARIES}
   ${CUDA_LIBRARIES}
   yaml-cpp
-  tensorrtbuffer
+  tensorrtbuffer_lib
 )
+
+add_library(${PROJECT_NAME}::lib ALIAS ${PROJECT_NAME}_lib)
+
+install(TARGETS )

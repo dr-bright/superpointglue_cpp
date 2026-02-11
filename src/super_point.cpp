@@ -1,7 +1,7 @@
 //
 // Created by haoyuefan on 2021/9/22.
 //
-#include "super_point.h"
+#include "superpointglue_cpp/super_point.h"
 #include <utility>
 #include <memory>
 #include <unordered_map>

@@ -15,7 +15,7 @@
 #include <opencv2/opencv.hpp>
 #include <algorithm>
 
-static bool GetFileNames(const std::string &path, std::vector<std::string> &filenames) {
+static inline bool GetFileNames(const std::string &path, std::vector<std::string> &filenames) {
     DIR *pDir;
     struct dirent *ptr;
     if (!(pDir = opendir(path.c_str()))) {
@@ -32,7 +32,7 @@ static bool GetFileNames(const std::string &path, std::vector<std::string> &file
     return true;
 }
 
-static bool FileExists(const std::string& file) {
+static inline bool FileExists(const std::string& file) {
     struct stat file_status{};
     if (stat(file.c_str(), &file_status) == 0 &&
         (file_status.st_mode & S_IFREG)) {
@@ -41,7 +41,7 @@ static bool FileExists(const std::string& file) {
     return false;
 }
 
-static void ConcatenateFolderAndFileNameBase(
+static inline void ConcatenateFolderAndFileNameBase(
         const std::string& folder, const std::string& file_name,
         std::string* path) {
     *path = folder;
@@ -51,14 +51,14 @@ static void ConcatenateFolderAndFileNameBase(
     *path = *path + file_name;
 }
 
-static std::string ConcatenateFolderAndFileName(
+static inline std::string ConcatenateFolderAndFileName(
         const std::string& folder, const std::string& file_name) {
     std::string path;
     ConcatenateFolderAndFileNameBase(folder, file_name, &path);
     return path;
 }
 
-static void VisualizeMatching(const cv::Mat &image0, const std::vector<cv::KeyPoint> &keypoints0, const cv::Mat &image1,
+static inline void VisualizeMatching(const cv::Mat &image0, const std::vector<cv::KeyPoint> &keypoints0, const cv::Mat &image1,
                               const std::vector<cv::KeyPoint> &keypoints1,
                               const std::vector<cv::DMatch> &superglue_matches, cv::Mat &output_image, double cost_time = -1) {
     if(image0.size != image1.size) return;

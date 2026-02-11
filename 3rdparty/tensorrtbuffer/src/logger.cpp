@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "logger.h"
-#include "error_recorder.h"
-#include "logging.h"
+#include "tensorrtbuffer/logger.h"
+#include "tensorrtbuffer/error_recorder.h"
+#include "tensorrtbuffer/logging.h"
 
 TensorRTErrorRecorder gRecorder;
 namespace tensorrt_log {
