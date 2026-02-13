@@ -14,38 +14,45 @@ using namespace tensorrt_log;
 using namespace tensorrt_buffer;
 
 SuperGlue::SuperGlue(const SuperGlueConfig &superglue_config) : superglue_config_(superglue_config), engine_(nullptr) {
-    setReportableSeverity(Logger::Severity::kINTERNAL_ERROR);
+    setReportableSeverity(Logger::Severity::kINFO);
 }
 
 bool SuperGlue::build() {
+    std::cerr << "Enter SuperGlue::build\n";
     if(deserialize_engine()){
+        std::cerr << "Deserialized, exit SuperGlue::build\n";
         return true;
     }
 
     auto builder = TensorRTUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(gLogger.getTRTLogger()));
     if (!builder) {
+        std::cerr << "Couldn't create builder, exit SuperGlue::build\n";
         return false;
     }
 
     const auto explicit_batch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
     auto network = TensorRTUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicit_batch));
     if (!network) {
+        std::cerr << "Couldn't create network, exit SuperGlue::build\n";
         return false;
     }
 
     auto config = TensorRTUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
     if (!config) {
+        std::cerr << "Couldn't create builder config, exit SuperGlue::build\n";
         return false;
     }
 
     auto parser = TensorRTUniquePtr<nvonnxparser::IParser>(
             nvonnxparser::createParser(*network, gLogger.getTRTLogger()));
     if (!parser) {
+        std::cerr << "Couldn't create parser, exit SuperGlue::build\n";
         return false;
     }
 
     auto profile = builder->createOptimizationProfile();
     if (!profile) {
+        std::cerr << "Couldn't create profile, exit SuperGlue::build\n";
         return false;
     }
     profile->setDimensions(superglue_config_.input_tensor_names[0].c_str(), OptProfileSelector::kMIN, Dims3(1, 1, 2));
@@ -76,27 +83,32 @@ bool SuperGlue::build() {
 
     auto constructed = construct_network(builder, network, config, parser);
     if (!constructed) {
+        std::cerr << "Couldn't construct network, exit SuperGlue::build\n";
         return false;
     }
 
     auto profile_stream = makeCudaStream();
     if (!profile_stream) {
+        std::cerr << "Couldn't create cuda stream, exit SuperGlue::build\n";
         return false;
     }
     config->setProfileStream(*profile_stream);
 
     TensorRTUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
     if (!plan) {
+        std::cerr << "Couldn't create plan, exit SuperGlue::build\n";
         return false;
     }
 
     TensorRTUniquePtr<IRuntime> runtime{createInferRuntime(gLogger.getTRTLogger())};
     if (!runtime) {
+        std::cerr << "Couldn't create runtime, exit SuperGlue::build\n";
         return false;
     }
 
     engine_ = std::shared_ptr<nvinfer1::ICudaEngine>(runtime->deserializeCudaEngine(plan->data(), plan->size()));
     if (!engine_) {
+        std::cerr << "Couldn't create engine, exit SuperGlue::build\n";
         return false;
     }
 
@@ -115,6 +127,8 @@ bool SuperGlue::build() {
     assert(keypoints_1_dims_.d[1] == -1);
     assert(scores_1_dims_.d[1] == -1);
     assert(descriptors_1_dims_.d[2] == -1);
+
+    std::cerr << "Normal exit SuperGlue::build\n";
     return true;
 }
 
@@ -125,6 +139,8 @@ bool SuperGlue::construct_network(TensorRTUniquePtr<nvinfer1::IBuilder> &builder
     auto parsed = parser->parseFromFile(superglue_config_.onnx_file.c_str(),
                                         static_cast<int>(gLogger.getReportableSeverity()));
     if (!parsed) {
+        std::cerr << "nvonnxparser::IParser::parseFromFile returned: " << parsed << "\n";
+        std::cerr << "ONNX file was: " << superglue_config_.onnx_file << "\n";
         return false;
     }
     config->setMaxWorkspaceSize(512_MiB);
@@ -138,13 +154,21 @@ bool SuperGlue::infer(const Eigen::Matrix<double, 259, Eigen::Dynamic> &features
                       Eigen::VectorXi &indices0,
                       Eigen::VectorXi &indices1,
                       Eigen::VectorXd &mscores0,
-                      Eigen::VectorXd &mscores1) {
+                      Eigen::VectorXd &mscores1)
+{
+    std::cerr << "Enter SuperGlue::infer\n";
     if (!context_) {
+        if (!engine_) {
+            std::cerr << "There is no engine_ for some reason.\n";
+            std::exit(1);
+        }
         context_ = TensorRTUniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
         if (!context_) {
+            std::cerr << "Context couldn't be created, exit SuperGlue::infer\n";
             return false;
+        }
     }
-    }
+    std::cerr << "Context ok, continue\n";
 
     assert(engine_->getNbBindings() == 7);
 
@@ -174,22 +198,30 @@ bool SuperGlue::infer(const Eigen::Matrix<double, 259, Eigen::Dynamic> &features
     BufferManager buffers(engine_, 0, context_.get());
 
     ASSERT(superglue_config_.input_tensor_names.size() == 6);
+    std::cerr << "Invoke process_input()\n";
     if (!process_input(buffers, features0, features1)) {
+        std::cerr << "SuperGlue::infer failed process_input, exit.\n";
         return false;
     }
+    std::cerr << "Done process_input()\n";
 
     buffers.copyInputToDevice();
 
+    std::cerr << "Invoke executeV2\n";
     bool status = context_->executeV2(buffers.getDeviceBindings().data());
     if (!status) {
+        std::cerr << "SuperGlue::infer failed context_->executeV2, exit.\n";
         return false;
     }
+    std::cerr << "Done executeV2\n";
     buffers.copyOutputToHost();
 
+    std::cerr << "Invoke process_output\n";
     if (!process_output(buffers, indices0, indices1, mscores0, mscores1)) {
+        std::cerr << "Error during process_output, exit Su\n";
         return false;
     }
-
+    std::cerr << "Ok, exit SuperGlue::infer\n";
     return true;
 }
 
@@ -503,13 +535,17 @@ bool SuperGlue::deserialize_engine() {
 }
 
 int SuperGlue::matching_points(Eigen::Matrix<double, 259, Eigen::Dynamic>& features0,
-                                  Eigen::Matrix<double, 259, Eigen::Dynamic>& features1, std::vector<cv::DMatch>& matches, bool outlier_rejection){
+                                  Eigen::Matrix<double, 259, Eigen::Dynamic>& features1, std::vector<cv::DMatch>& matches, bool outlier_rejection)
+{
+  std::cerr << "Enter SuperGlue::matching_points\n";
   matches.clear();
   Eigen::Matrix<double, 259, Eigen::Dynamic> norm_features0 = normalize_keypoints(features0, superglue_config_.image_width, superglue_config_.image_height);
   Eigen::Matrix<double, 259, Eigen::Dynamic> norm_features1 = normalize_keypoints(features1, superglue_config_.image_width, superglue_config_.image_height);
   Eigen::VectorXi indices0, indices1;
   Eigen::VectorXd mscores0, mscores1;
+  std::cerr << "Invoke SuperGlue->infer\n";
   infer(norm_features0, norm_features1, indices0, indices1, mscores0, mscores1);
+  std::cerr << "Done SuperGlue->infer\n";
 
   int num_match = 0;
   std::vector<cv::Point2f> points0, points1;
@@ -536,6 +572,7 @@ int SuperGlue::matching_points(Eigen::Matrix<double, 259, Eigen::Dynamic>& featu
     matches.resize(j);
   }
 
+  std::cerr << "Exit SuperGlue::matching_points\n";
   return matches.size();
 }
 

@@ -14,7 +14,7 @@ using namespace tensorrt_buffer;
 SuperPoint::SuperPoint(SuperPointConfig super_point_config)
         : super_point_config_(std::move(super_point_config)), engine_(
         nullptr) {
-    setReportableSeverity(Logger::Severity::kINTERNAL_ERROR);
+    setReportableSeverity(Logger::Severity::kINFO);
 }
 
 bool SuperPoint::build() {
@@ -102,9 +102,11 @@ bool SuperPoint::construct_network(TensorRTUniquePtr<nvinfer1::IBuilder> &builde
 
 
 bool SuperPoint::infer(const cv::Mat &image, Eigen::Matrix<double, 259, Eigen::Dynamic> &features) {
+    std::cerr << "Enter SuperPoint::infer\n";
     if (!context_) {
         context_ = TensorRTUniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
         if (!context_) {
+            std::cerr << "Exit with failure SuperPoint::infer\n";
             return false;
         }
     }
@@ -119,18 +121,22 @@ bool SuperPoint::infer(const cv::Mat &image, Eigen::Matrix<double, 259, Eigen::D
     
     ASSERT(super_point_config_.input_tensor_names.size() == 1);
     if (!process_input(buffers, image)) {
+        std::cerr << "Exit with failure SuperPoint::infer\n";
         return false;
     }
     buffers.copyInputToDevice();
 
     bool status = context_->executeV2(buffers.getDeviceBindings().data());
     if (!status) {
+        std::cerr << "Exit with failure SuperPoint::infer\n";
         return false;
     }
     buffers.copyOutputToHost();
     if (!process_output(buffers, features)) {
+        std::cerr << "Exit with failure SuperPoint::infer\n";
         return false;
     }
+    std::cerr << "Exit SuperPoint::infer\n";
     return true;
 }
 
