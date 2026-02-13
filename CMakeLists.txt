@@ -17,6 +17,7 @@ find_package(yaml-cpp REQUIRED)
 add_library(${PROJECT_NAME}_lib SHARED
   src/super_point.cpp
   src/super_glue.cpp
+  src/read_config.cpp
   include/superpointglue_cpp/read_config.h
   include/superpointglue_cpp/super_glue.h
   include/superpointglue_cpp/super_point.h
@@ -42,6 +43,11 @@ target_link_libraries(${PROJECT_NAME}_lib
   tensorrtbuffer_lib
 )
 
+target_compile_definitions(${PROJECT_NAME}_lib
+  PUBLIC
+      "SUPERPOINTGLUE_CPP_CONFIG_DEFAULT_PATH=\"${PROJECT_SOURCE_DIR}/config/config.yaml\""
+)
+
 add_library(${PROJECT_NAME}::lib ALIAS ${PROJECT_NAME}_lib)
 
-install(TARGETS )
+# install(TARGETS )

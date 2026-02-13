@@ -15,12 +15,11 @@ int main(int argc, char** argv){
     }
 
     std::string config_path = argv[1];
-    std::string model_dir = argv[2];
-    std::string image_path = argv[3];
-    std::string output_path = argv[4];
+    std::string image_path = argv[2];
+    std::string output_path = argv[3];
     std::vector<std::string> image_names;
     GetFileNames(image_path, image_names);
-    Configs configs(config_path, model_dir);
+    Configs configs(config_path);
     int width = configs.superglue_config.image_width;
     int height = configs.superglue_config.image_height;
 

@@ -43,7 +43,14 @@ static inline bool FileExists(const std::string& file) {
 
 static inline void ConcatenateFolderAndFileNameBase(
         const std::string& folder, const std::string& file_name,
-        std::string* path) {
+        std::string* path)
+{
+    if (!file_name.size()) {
+        *path = folder;
+    }
+    if (file_name[0] == '/') {
+        *path = file_name;
+    }
     *path = folder;
     if (path->back() != '/') {
         *path += '/';

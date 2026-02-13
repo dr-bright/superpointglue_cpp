@@ -60,7 +60,7 @@ cv::Mat image0 = cv::imread("../image/image0.png", cv::IMREAD_GRAYSCALE);
 cv::Mat image1 = cv::imread("../image/image1.png", cv::IMREAD_GRAYSCALE);
 
 // read config from file
-Configs configs("../config/config.yaml", "../weights/");
+Configs configs("../config/config.yaml");
 
 // create superpoint detector and superglue matcher
 auto superpoint = std::make_shared<SuperPoint>(configs.superpoint_config);

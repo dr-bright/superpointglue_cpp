@@ -15,9 +15,8 @@ int main(int argc, char** argv){
   }
 
   std::string config_path = argv[1];
-  std::string model_dir = argv[2];
-  std::string image0_path = argv[3];
-  std::string image1_path = argv[4];
+  std::string image0_path = argv[2];
+  std::string image1_path = argv[3];
 
   cv::Mat image0 = cv::imread(image0_path, cv::IMREAD_GRAYSCALE);
   cv::Mat image1 = cv::imread(image1_path, cv::IMREAD_GRAYSCALE);
@@ -27,7 +26,7 @@ int main(int argc, char** argv){
     return 0;
   }
 
-  Configs configs(config_path, model_dir);
+  Configs configs(config_path);
   int width = configs.superglue_config.image_width;
   int height = configs.superglue_config.image_height;
 

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 
-
 struct SuperPointConfig {
   int max_keypoints{};
   double keypoint_threshold{};
@@ -28,18 +27,25 @@ struct SuperGlueConfig {
 };
 
 
-struct Configs{
-  std::string model_dir;
-
+struct Configs {
   SuperPointConfig superpoint_config;
   SuperGlueConfig superglue_config;
 
-  Configs(const std::string& config_file, const std::string& model_dir){
-    std::cout << "Config file is " << config_file << std::endl;
+  Configs(const std::string& config_file){
+    std::cerr << "Config file is " << config_file << std::endl;
     if(!FileExists(config_file)){
       std::cerr << "Config file " << config_file << " doesn't exist." << std::endl;
       return;
     }
+    std::string config_dir;
+    size_t pos = config_file.rfind('/');
+    if (pos == config_file.npos) {
+      config_dir = ".";
+    } else {
+      config_dir = config_file.substr(0, pos);
+    }
+    std::cerr << "Config dir is " << config_dir << std::endl;
+
     YAML::Node file_node = YAML::LoadFile(config_file);
 
     YAML::Node superpoint_node = file_node["superpoint"];
@@ -59,8 +65,8 @@ struct Configs{
     }
     std::string superpoint_onnx_file = superpoint_node["onnx_file"].as<std::string>();
     std::string superpoint_engine_file= superpoint_node["engine_file"].as<std::string>();
-    superpoint_config.onnx_file = ConcatenateFolderAndFileName(model_dir, superpoint_onnx_file);
-    superpoint_config.engine_file = ConcatenateFolderAndFileName(model_dir, superpoint_engine_file);
+    superpoint_config.onnx_file = ConcatenateFolderAndFileName(config_dir, superpoint_onnx_file);
+    superpoint_config.engine_file = ConcatenateFolderAndFileName(config_dir, superpoint_engine_file);
 
     YAML::Node superglue_node = file_node["superglue"];
     superglue_config.image_width = superglue_node["image_width"].as<int>();
@@ -76,11 +82,13 @@ struct Configs{
     for(size_t i = 0; i < superglue_num_output_tensor_names; i++){
       superglue_config.output_tensor_names.push_back(superglue_output_tensor_names_node[i].as<std::string>());
     }
-    std::string superglue_onnx_file = superglue_node["onnx_file"].as<std::string>();
-    std::string superglue_engine_file= superglue_node["engine_file"].as<std::string>();
-    superglue_config.onnx_file = ConcatenateFolderAndFileName(model_dir, superglue_onnx_file);
-    superglue_config.engine_file = ConcatenateFolderAndFileName(model_dir, superglue_engine_file);
+    std::string superglue_onnx_file   = superglue_node["onnx_file"].as<std::string>();
+    std::string superglue_engine_file = superglue_node["engine_file"].as<std::string>();
+    superglue_config.onnx_file = ConcatenateFolderAndFileName(config_dir, superglue_onnx_file);
+    superglue_config.engine_file = ConcatenateFolderAndFileName(config_dir, superglue_engine_file);
   }
+
+  Configs();
 };
 
 #endif  // READ_CONFIG_H_

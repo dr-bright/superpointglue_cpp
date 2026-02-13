@@ -25,7 +25,7 @@ def main():
         description='script to convert superpoint model from pytorch to onnx')
     parser.add_argument('--weight_file', default="weights/superglue_outdoor.pth",
                         help="pytorch weight file (.pth)")
-    parser.add_argument('--output_dir', default="output", help="output directory")
+    parser.add_argument('--output_dir', default="onnx", help="output directory")
     args = parser.parse_args()
 
     output_dir = args.output_dir
