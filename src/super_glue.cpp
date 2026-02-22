@@ -18,9 +18,9 @@ SuperGlue::SuperGlue(const SuperGlueConfig &superglue_config) : superglue_config
 }
 
 bool SuperGlue::build() {
-    std::cerr << "Enter SuperGlue::build\n";
+    // std::cerr << "Enter SuperGlue::build\n";
     if(deserialize_engine()){
-        std::cerr << "Deserialized, exit SuperGlue::build\n";
+        // std::cerr << "Deserialized, exit SuperGlue::build\n";
         return true;
     }
 
@@ -128,7 +128,7 @@ bool SuperGlue::build() {
     assert(scores_1_dims_.d[1] == -1);
     assert(descriptors_1_dims_.d[2] == -1);
 
-    std::cerr << "Normal exit SuperGlue::build\n";
+    // std::cerr << "Normal exit SuperGlue::build\n";
     return true;
 }
 
@@ -156,7 +156,7 @@ bool SuperGlue::infer(const Eigen::Matrix<double, 259, Eigen::Dynamic> &features
                       Eigen::VectorXd &mscores0,
                       Eigen::VectorXd &mscores1)
 {
-    std::cerr << "Enter SuperGlue::infer\n";
+    // std::cerr << "Enter SuperGlue::infer\n";
     if (!context_) {
         if (!engine_) {
             std::cerr << "There is no engine_ for some reason.\n";
@@ -168,7 +168,7 @@ bool SuperGlue::infer(const Eigen::Matrix<double, 259, Eigen::Dynamic> &features
             return false;
         }
     }
-    std::cerr << "Context ok, continue\n";
+    // std::cerr << "Context ok, continue\n";
 
     assert(engine_->getNbBindings() == 7);
 
@@ -198,30 +198,30 @@ bool SuperGlue::infer(const Eigen::Matrix<double, 259, Eigen::Dynamic> &features
     BufferManager buffers(engine_, 0, context_.get());
 
     ASSERT(superglue_config_.input_tensor_names.size() == 6);
-    std::cerr << "Invoke process_input()\n";
+    // std::cerr << "Invoke process_input()\n";
     if (!process_input(buffers, features0, features1)) {
         std::cerr << "SuperGlue::infer failed process_input, exit.\n";
         return false;
     }
-    std::cerr << "Done process_input()\n";
+    // std::cerr << "Done process_input()\n";
 
     buffers.copyInputToDevice();
 
-    std::cerr << "Invoke executeV2\n";
+    // std::cerr << "Invoke executeV2\n";
     bool status = context_->executeV2(buffers.getDeviceBindings().data());
     if (!status) {
         std::cerr << "SuperGlue::infer failed context_->executeV2, exit.\n";
         return false;
     }
-    std::cerr << "Done executeV2\n";
+    // std::cerr << "Done executeV2\n";
     buffers.copyOutputToHost();
 
-    std::cerr << "Invoke process_output\n";
+    // std::cerr << "Invoke process_output\n";
     if (!process_output(buffers, indices0, indices1, mscores0, mscores1)) {
         std::cerr << "Error during process_output, exit Su\n";
         return false;
     }
-    std::cerr << "Ok, exit SuperGlue::infer\n";
+    // std::cerr << "Ok, exit SuperGlue::infer\n";
     return true;
 }
 
@@ -537,15 +537,15 @@ bool SuperGlue::deserialize_engine() {
 int SuperGlue::matching_points(Eigen::Matrix<double, 259, Eigen::Dynamic>& features0,
                                   Eigen::Matrix<double, 259, Eigen::Dynamic>& features1, std::vector<cv::DMatch>& matches, bool outlier_rejection)
 {
-  std::cerr << "Enter SuperGlue::matching_points\n";
+//   std::cerr << "Enter SuperGlue::matching_points\n";
   matches.clear();
   Eigen::Matrix<double, 259, Eigen::Dynamic> norm_features0 = normalize_keypoints(features0, superglue_config_.image_width, superglue_config_.image_height);
   Eigen::Matrix<double, 259, Eigen::Dynamic> norm_features1 = normalize_keypoints(features1, superglue_config_.image_width, superglue_config_.image_height);
   Eigen::VectorXi indices0, indices1;
   Eigen::VectorXd mscores0, mscores1;
-  std::cerr << "Invoke SuperGlue->infer\n";
+//   std::cerr << "Invoke SuperGlue->infer\n";
   infer(norm_features0, norm_features1, indices0, indices1, mscores0, mscores1);
-  std::cerr << "Done SuperGlue->infer\n";
+//   std::cerr << "Done SuperGlue->infer\n";
 
   int num_match = 0;
   std::vector<cv::Point2f> points0, points1;
@@ -572,7 +572,7 @@ int SuperGlue::matching_points(Eigen::Matrix<double, 259, Eigen::Dynamic>& featu
     matches.resize(j);
   }
 
-  std::cerr << "Exit SuperGlue::matching_points\n";
+//   std::cerr << "Exit SuperGlue::matching_points\n";
   return matches.size();
 }
 
